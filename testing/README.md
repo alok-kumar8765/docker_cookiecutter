@@ -1,4 +1,4 @@
-# Docker Without Cookiecutter
+# Docker Cookiecutter
     In this repo we try to do practical on docker creating dockerfile only.
 
 ## PreRequsite :
@@ -20,15 +20,66 @@
 ## Install Requirements :
     pip install -r requirements.txt
 
+## Commands To Install Docker :
+    - Create virtualenv on currentProject adjacent : 
+        1. virtualenv currentProEnv
+        2. In currentProEnv install 
+        3. pip install django
+        4. pip install cookiecutter
+        5. pip install django-environ==0.9.0
+    - and finally type the following command to create Docker file : 
+        6.  cookiecutter gh:cookiecutter/cookiecutter-django
+
+>   After Hiting 6th command you will get a ui asking some option, where you have to type "y" or "n" ,
+    but just press Enter and look for option "use_docker" her type "y" and now press Enter till last options.
+
 ## How to check docker is installed and ready for work or not:
     - In vs code terminal type : docker login (if you logged in then it’s working)
     - In cmd type : docker –verson (if you saw version you can now ready to work)
  
 ## Step To Setup Your Docker:
-    Create your django projects as you in general create. Only add 3 files at project level
-        1- Dockerfile 	
-        2- command.txt	
-        3- .dockerignore
+    Now copy the given below files and folder to your project folder:
+        1.   .envs 	
+        2.    compose	
+        3.   .dockerignore	
+        4.   .gitignore	
+        5.    local.yml	
+        6.    production.yml
+    
+    Create requirements.txt file in your currentProject folder and mention these packages also :
+        1.  psycopg2==2.9.3
+        2.  django-environ==0.9.0 
+
+## Changes you have to do in files : 
+
+    - currentProject/compose/local/django/Dockerfile
+        - In line no. 19 : COPY ./requirements.txt . 
+        - In line no. 22 : RUN pip wheel --wheel-dir /usr/src/app/wheels  \
+        - In line no. 23:  -r requirements.txt
+
+    - currentProject/compose/local/django/Start
+        - In line no. 9 : python manage.py runserver 0.0.0.0:8000
+
+    - currentProject/local.yml
+        - From line no. 37 till end remove. It’s doc services setting which is not important.
+
+    - currentProject/currentProject/settings.py :
+        In between line no. 13 to SECURITY_KEY line paste this code : 
+
+            import environ
+            # Build paths inside the project like this: BASE_DIR / 'subdir'.
+            BASE_DIR = Path(__file__).resolve().parent.parent
+            env = environ.Env()
+
+            READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
+            if READ_DOT_ENV_FILE:
+                # OS environment variables take precedence over variables from .env
+                env.read_env(str(BASE_DIR / ".env"))
+            Change allowed host with : ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1","*"]
+            Change database setting :
+            DATABASES = {"default": env.db("DATABASE_URL")}
+            DATABASES["default"]["ATOMIC_REQUESTS"] = True
+
 
 ## In dockerfile Mention : 
     FROM python:3.8-slim-buster
@@ -39,8 +90,9 @@
     CMD ["python","manage.py","runserver","0.0.0.0:8000"]
 
 ## Command to Run Docker:
-    1. docker build --tag python-django .
-    2. docker run --publish 8000:8000 python-django
+    Dockerize : docker-compose -f local.yml build (run after every update in code)
+    Run Docker : docker-compose -f local.yml up (for run server)
+    On browser hit : localhost:8000
 
 ### Refrence : 
 [Blog](nahid-ibne-akhtar.medium.com/django-app-on-docker-or-dockerize-your-existing-django-app-on-windows-10-be4c28937dc)
